@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import { getAccessToken, getStore, searchProducts } from "./kroger.js";
+import { storeProducts } from "./supabase.js";
 
 dotenv.config();
 
@@ -18,19 +19,40 @@ app.get("/search", async (req, res) => {
     const token = await getAccessToken();
     const locationId = await getStore(token);
     const products = await searchProducts(token, locationId, term);
+    await storeProducts(products);
 
-    const results = products.map(p => {
-      const price = p.items[0].price;
-      return {
-        name: p.description,
-        price: price?.promo || price?.regular
-      };
-    });
+
+  const results = products.map(p => {
+  const item =
+    Array.isArray(p.items) && p.items.length > 0
+      ? p.items[0]
+      : null;
+    
+    
+  return {
+    name: p.description ?? "Unknown product",
+    brand: p?.brand,
+    source: "Kroger",
+    externalID: p?.productId,
+    price: item?.price?.promo ?? item?.price?.regular ?? null,
+    imageurl: null
+  };
+
+
+
+  
+
+
+});
+
 
     res.json(results);
   } catch (err) {
+    console.error("SEARCH ERROR:", err);
     res.status(500).json({ error: "Failed to search products" });
   }
+
+  
 });
 
 app.listen(PORT, () => {

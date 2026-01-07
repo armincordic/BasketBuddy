@@ -49,3 +49,4 @@ export const searchProducts = async (token, locationId, term) => {
   const data = await res.json();
   return data.data;
 };
+
