@@ -1,8 +1,9 @@
-import { signUpNewUser } from "./public/auth.js";
+import { signUpNewUser } from "./auth";
 
-document
-  .getElementById("signup-form")
-  .addEventListener("submit", async (e) => {
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("signup-form");
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const email = e.target.email.value;
@@ -15,3 +16,4 @@ document
       alert(err.message);
     }
   });
+});
