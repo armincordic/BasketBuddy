@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 
 export const getAccessToken = async () => {
   const clientId = process.env.KROGER_CLIENT_ID;

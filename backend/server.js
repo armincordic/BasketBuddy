@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
-dotenv.config({ path: path.join(__dirname, "../.env") });
+dotenv.config();
 
 const app = express();
 const PORT = 3000;
@@ -47,7 +47,7 @@ app.get("/search", async (req, res) => {
     source: "Kroger",
     externalID: p?.productId,
     price: item?.price?.promo ?? item?.price?.regular ?? null,
-    imageurl: null
+    image_url: p.images?.[0]?.sizes?.find(s => s.size === "medium")?.url ?? null
   };
 
 
