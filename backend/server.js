@@ -1,70 +1,150 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import { getAccessToken, getStore, searchProducts } from "./kroger.js";
-import { storeProducts } from "./supabaseAdmin.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+import {
+  getAccessToken,
+  getStore,
+  searchProducts,
+  getProductById,
+  normalizeKrogerProduct
+} from "./kroger.js";
+import { supabase } from "./supabaseAdmin.js";
 
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = 3001;
 
-app.use(
-  express.static(
-    path.join(__dirname, "../frontend/public")
-  )
-);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-app.get("/search", async (req, res) => {
-  const term = req.query.term;
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "../frontend/public")));
 
-  if (!term) {
-    return res.status(400).json({ error: "Missing search term" });
-  }
+async function getUserFromReq(req) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.replace("Bearer ", "");
+  return supabase.auth.getUser(token);
+}
 
+/* ---------- SEARCH ---------- */
+app.get("/api/search", async (req, res) => {
   try {
     const token = await getAccessToken();
     const locationId = await getStore(token);
-    const products = await searchProducts(token, locationId, term);
-    await storeProducts(products);
-
-
-  const results = products.map(p => {
-  const item =
-    Array.isArray(p.items) && p.items.length > 0
-      ? p.items[0]
-      : null;
-    
-    
-  return {
-    name: p.description ?? "Unknown product",
-    brand: p?.brand,
-    source: "Kroger",
-    externalID: p?.productId,
-    price: item?.price?.promo ?? item?.price?.regular ?? null,
-    image_url: p.images?.[0]?.sizes?.find(s => s.size === "medium")?.url ?? null
-  };
-
-
-
-  
-
-
+    const products = await searchProducts(token, locationId, req.query.term);
+    res.json(products.map(normalizeKrogerProduct));
+  } catch {
+    res.status(500).json([]);
+  }
 });
 
+/* ---------- PRODUCTS ---------- */
+app.get("/api/products", async (req, res) => {
+  try {
+    const ids = req.query.ids?.split(",") ?? [];
+    if (ids.length === 0) return res.json([]);
 
-    res.json(results);
-  } catch (err) {
-    console.error("SEARCH ERROR:", err);
-    res.status(500).json({ error: "Failed to search products" });
+    const token = await getAccessToken();
+    const locationId = await getStore(token);
+
+    const products = await Promise.all(
+      ids.map(async id => {
+        try {
+          const raw = await getProductById(token, id, locationId);
+          return normalizeKrogerProduct(raw);
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    res.json(products.filter(Boolean));
+  } catch {
+    res.json([]);
+  }
+});
+
+/* ---------- SAVED ITEMS ---------- */
+app.get("/api/saved-items", async (req, res) => {
+  const { data: { user } } = await getUserFromReq(req);
+  if (!user) return res.status(401).json([]);
+
+  const { data } = await supabase
+    .from("saved_items")
+    .select("*")
+    .eq("user_id", user.id);
+
+  res.json(data ?? []);
+});
+
+app.post("/api/saved-items", async (req, res) => {
+  const { data: { user } } = await getUserFromReq(req);
+  if (!user) return res.sendStatus(401);
+
+  const { externalID, source, name, image_url, price } = req.body;
+
+  const { data: existing } = await supabase
+    .from("saved_items")
+    .select("quantity")
+    .eq("user_id", user.id)
+    .eq("external_id", externalID)
+    .eq("source", source)
+    .single();
+
+  if (existing) {
+    await supabase
+      .from("saved_items")
+      .update({ quantity: existing.quantity + 1 })
+      .eq("user_id", user.id)
+      .eq("external_id", externalID)
+      .eq("source", source);
+  } else {
+    await supabase.from("saved_items").insert({
+      user_id: user.id,
+      external_id: externalID,
+      source,
+      name,
+      image_url,
+      price_snapshot: price,
+      quantity: 1
+    });
   }
 
-  
+  res.sendStatus(200);
+});
+
+app.delete("/api/saved-items/:id", async (req, res) => {
+  const { data: { user } } = await getUserFromReq(req);
+  if (!user) return res.sendStatus(401);
+
+  const { data: row } = await supabase
+    .from("saved_items")
+    .select("quantity")
+    .eq("user_id", user.id)
+    .eq("external_id", req.params.id)
+    .single();
+
+  if (!row) return res.sendStatus(200);
+
+  if (row.quantity > 1) {
+    await supabase
+      .from("saved_items")
+      .update({ quantity: row.quantity - 1 })
+      .eq("user_id", user.id)
+      .eq("external_id", req.params.id);
+  } else {
+    await supabase
+      .from("saved_items")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("external_id", req.params.id);
+  }
+
+  res.sendStatus(200);
 });
 
 app.listen(PORT, () => {

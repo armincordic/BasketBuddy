@@ -49,3 +49,40 @@ export const searchProducts = async (token, locationId, term) => {
   return data.data;
 };
 
+export async function getProductById(token, productId, locationId) {
+  const res = await fetch(
+    `https://api.kroger.com/v1/products/${productId}?filter.locationId=${locationId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
+      }
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch product");
+  }
+
+  const json = await res.json();
+  return json.data;
+}
+
+export function normalizeKrogerProduct(p) {
+  const item =
+    Array.isArray(p.items) && p.items.length > 0
+      ? p.items[0]
+      : null;
+
+  return {
+    name: p.description ?? "Unknown product",
+    brand: p?.brand,
+    source: "Kroger",
+    externalID: p?.productId,
+    price: item?.price?.promo ?? item?.price?.regular ?? null,
+    image_url: p.images?.find(img => img.perspective === "front")?.sizes?.[0]?.url ?? null
+  };
+}
+
+
+

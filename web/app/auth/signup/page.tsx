@@ -1,27 +1,34 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { signIn } from "./auth";
+"use client";
 
-function SignIn() {
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
+
+export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
+  const router = useRouter();
 
   async function handleSubmit() {
     try {
       setLoading(true);
       setError(null);
-      await signIn(email, password);
-      navigate("/search");
+
+      const { error } = await supabase.auth.signUp({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      // optional: email confirmation may be required
+      router.push("/auth/login");
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Something went wrong");
-      }
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -29,7 +36,7 @@ function SignIn() {
 
   return (
     <div>
-      <h1>Sign In</h1>
+      <h1>Sign Up</h1>
 
       <input
         type="email"
@@ -46,7 +53,7 @@ function SignIn() {
       />
 
       <button onClick={handleSubmit} disabled={loading}>
-        {loading ? "Signing in..." : "Sign In"}
+        {loading ? "Creating account..." : "Sign Up"}
       </button>
 
       {error &&
@@ -55,10 +62,8 @@ function SignIn() {
         </p>}
 
       <p>
-        Don’t have an account? <Link to="/signup">Sign up</Link>
+        Already have an account? <Link href="/auth/login">Sign in</Link>
       </p>
     </div>
   );
 }
-
-export default SignIn;
