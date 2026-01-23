@@ -106,37 +106,70 @@ export default function Basket() {
 
   /* ---------- UI ---------- */
   return (
-    <div>
-      <h1>Your Basket</h1>
+  <div className="min-h-screen bg-(--parchment) flex justify-center px-6 py-8">
+    <div className="w-full max-w-3xl flex flex-col gap-6">
+      <h1 className="text-3xl font-bold text-center text-(--charcoal)">
+        Your Basket
+      </h1>
 
       {visibleProducts.length === 0 ? (
-        <p>Your basket is empty.</p>
+        <p className="text-center text-(--charcoal)">
+          Your basket is empty.
+        </p>
       ) : (
-        <ul>
+        <ul className="flex flex-col gap-6">
           {visibleProducts.map(p => {
             const krogerUrl = `https://www.kroger.com/p/${slugify(
               p.name
             )}/${p.externalID}`;
 
             return (
-              <li key={p.externalID}>
-                <img src={p.image_url} width={120} />
-                <p>{p.name}</p>
-                <p>${p.price.toFixed(2)}</p>
+              <li
+                key={p.externalID}
+                className="flex gap-4 p-4 rounded bg-white border border-(--dust)"
+              >
+                <img
+                  src={p.image_url}
+                  alt={p.name}
+                  className="w-28 h-28 object-contain"
+                />
 
-                <button onClick={() => dec(p.externalID)}>-</button>
-                <span style={{ margin: "0 8px" }}>
-                  {quantities[p.externalID]}
-                </span>
-                <button onClick={() => inc(p.externalID)}>+</button>
+                <div className="flex flex-col flex-1 gap-2">
+                  <p className="font-medium text-(--charcoal)">
+                    {p.name}
+                  </p>
 
-                <div style={{ marginTop: 8 }}>
+                  <p className="text-sm text-(--slateblue)">
+                    ${p.price.toFixed(2)}
+                  </p>
+
+                  <div className="flex items-center gap-3 mt-2">
+                    <button
+                      onClick={() => dec(p.externalID)}
+                      className="px-3 py-1 rounded border border-(--dust) text-(--charcoal)"
+                    >
+                      −
+                    </button>
+
+                    <span className="text-(--charcoal)">
+                      {quantities[p.externalID]}
+                    </span>
+
+                    <button
+                      onClick={() => inc(p.externalID)}
+                      className="px-3 py-1 rounded border border-(--dust)] text-(--charcoal)"
+                    >
+                      +
+                    </button>
+                  </div>
+
                   <a
                     href={krogerUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="mt-3 text-sm text-(--slateblue) hover:underline"
                   >
-                    <button>View on Kroger</button>
+                    View on Kroger
                   </a>
                 </div>
               </li>
@@ -145,11 +178,21 @@ export default function Basket() {
         </ul>
       )}
 
-      <h2>Total: ${total.toFixed(2)}</h2>
+      <div className="flex justify-between items-center mt-4">
+        <h2 className="text-xl font-semibold text-(--charcoal)">
+          Total: ${total.toFixed(2)}
+        </h2>
 
-      <button onClick={() => router.push("/search")}>
-        Back to Search
-      </button>
+        <button
+          onClick={() => router.push("/search")}
+          className="px-4 py-2 rounded bg-(--slateblue) text-white
+                     hover:bg-(--teal) transition"
+        >
+          Back to Search
+        </button>
+      </div>
     </div>
-  );
+  </div>
+);
+
 }

@@ -37,14 +37,20 @@ function SignIn() {
   }
 
   return (
-    <div>
-      <h1>Sign In</h1>
+  <div className="min-h-screen flex items-center justify-center bg-[var(--parchment)]">
+    <div className="w-full max-w-sm flex flex-col gap-4">
+      <h1 className="text-3xl font-bold text-center text-[var(--charcoal)]">
+        Sign In
+      </h1>
 
       <input
         type="email"
         placeholder="Email"
         value={email}
         onChange={e => setEmail(e.target.value)}
+        className="px-4 py-2 rounded border border-[var(--dust)] bg-white
+                   text-[var(--charcoal)] placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-[var(--teal)]"
       />
 
       <input
@@ -52,22 +58,39 @@ function SignIn() {
         placeholder="Password"
         value={password}
         onChange={e => setPassword(e.target.value)}
+        className="px-4 py-2 rounded border border-[var(--dust)] bg-white
+                   text-[var(--charcoal)] placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-[var(--teal)]"
       />
 
-      <button onClick={handleSubmit} disabled={loading}>
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        className="mt-2 px-4 py-2 rounded bg-[var(--slateblue)] text-white
+                   hover:bg-[var(--teal)] transition disabled:opacity-50"
+      >
         {loading ? "Signing in..." : "Sign In"}
       </button>
 
-      {error &&
-        <p>
+      {error && (
+        <p className="text-sm text-red-600 text-center">
           {error}
-        </p>}
+        </p>
+      )}
 
-      <p>
-        Don’t have an account? <Link href="/auth/signup">Sign up</Link>
+      <p className="text-sm text-center text-[var(--charcoal)]">
+        Don’t have an account?{" "}
+        <Link
+          href="/auth/signup"
+          className="text-[var(--slateblue)] hover:underline"
+        >
+          Sign up
+        </Link>
       </p>
     </div>
-  );
+  </div>
+);
+
 }
 
 export default SignIn;

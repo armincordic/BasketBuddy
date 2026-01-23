@@ -163,72 +163,105 @@ export default function Search() {
 
   /* ---------- UI ---------- */
   return (
-    <div>
-      <div
-        onClick={() => router.push("/basket")}
-        style={{
-          position: "fixed",
-          top: 16,
-          right: 16,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          cursor: "pointer",
-          zIndex: 1000
-        }}
+  <div className="min-h-screen bg-[var(--parchment)] px-6 py-8">
+    {/* Cart button */}
+    <div
+      onClick={() => router.push("/basket")}
+      className="fixed top-6 right-6 flex items-center gap-2 cursor-pointer z-50"
+    >
+      <RiShoppingCart2Fill
+        size={28}
+        className="text-[var(--charcoal)]"
+      />
+      <span className="bg-[var(--teal)] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+        {cartItemCount}
+      </span>
+    </div>
+
+    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+      <h1 className="text-3xl font-bold text-center text-[var(--charcoal)]">
+        Search
+      </h1>
+
+      <form
+        onSubmit={handleSearch}
+        className="flex gap-3 justify-center"
       >
-        <RiShoppingCart2Fill size={28} />
-        <span
-          style={{
-            background: "red",
-            color: "white",
-            borderRadius: "50%",
-            width: 20,
-            height: 20,
-            fontSize: 12,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          {cartItemCount}
-        </span>
-      </div>
-
-      <h1>Search</h1>
-
-      <form onSubmit={handleSearch}>
         <input
           value={term}
           onChange={e => setTerm(e.target.value)}
           placeholder="Search products"
+          className="w-full max-w-md px-4 py-2 rounded border border-[var(--dust)] bg-white
+                     text-[var(--charcoal)] placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-[var(--teal)]"
         />
-        <button type="submit" disabled={loading}>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-4 py-2 rounded bg-[var(--slateblue)] text-white
+                     hover:bg-[var(--teal)] transition disabled:opacity-50"
+        >
           {loading ? "Searching..." : "Search"}
         </button>
       </form>
 
-      {error && <p>{error}</p>}
+      {error && (
+        <p className="text-center text-red-600">
+          {error}
+        </p>
+      )}
 
-      <ul>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {results.map(item => {
           const qty = quantities[item.externalID] ?? 0;
 
           return (
-            <li key={item.externalID}>
-              <img src={item.image_url} width={120} />
-              <p>{item.name}</p>
-              <p>${item.price}</p>
+            <li
+              key={item.externalID}
+              className="bg-white border border-[var(--dust)] rounded p-4 flex flex-col gap-3"
+            >
+              <img
+                src={item.image_url}
+                alt={item.name}
+                className="w-full h-40 object-contain"
+              />
+
+              <p className="font-medium text-[var(--charcoal)]">
+                {item.name}
+              </p>
+
+              <p className="text-sm text-[var(--slateblue)]">
+                ${item.price.toFixed(2)}
+              </p>
 
               {qty === 0 ? (
-                <button onClick={() => handleAdd(item)}>+ Add</button>
+                <button
+                  onClick={() => handleAdd(item)}
+                  className="mt-auto px-3 py-2 rounded bg-[var(--slateblue)] text-white
+                             hover:bg-[var(--teal)] transition"
+                >
+                  + Add
+                </button>
               ) : (
-                <div>
-                  <button onClick={() => handleDecrement(item.externalID)}>
-                    -
+                <div className="mt-auto flex items-center justify-between">
+                  <button
+                    onClick={() => handleDecrement(item.externalID)}
+                    className="px-3 py-1 rounded border border-[var(--dust)] text-[var(--charcoal)]"
+                  >
+                    −
                   </button>
-                  <span style={{ margin: "0 8px" }}>{qty}</span>
-                  <button onClick={() => handleIncrement(item)}>+</button>
+
+                  <span className="text-[var(--charcoal)]">
+                    {qty}
+                  </span>
+
+                  <button
+                    onClick={() => handleIncrement(item)}
+                    className="px-3 py-1 rounded border border-[var(--dust)] text-[var(--charcoal)]"
+                  >
+                    +
+                  </button>
                 </div>
               )}
             </li>
@@ -241,9 +274,12 @@ export default function Search() {
           await supabase.auth.signOut();
           router.push("/auth/login");
         }}
+        className="self-center mt-6 text-sm text-[var(--slateblue)] hover:underline"
       >
         Sign Out
       </button>
     </div>
-  );
+  </div>
+);
+
 }
