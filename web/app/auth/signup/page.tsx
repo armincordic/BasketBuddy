@@ -1,34 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import EmailConfirmationModal from "@/app/components/auth/EmailConfirmationModal";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
 
   async function handleSubmit() {
     try {
       setLoading(true);
       setError(null);
 
-      await supabase.auth.signUp({
-  email,
-  password,
-  options: {
-    emailRedirectTo: `${location.origin}/auth/callback`,
-  },
-});
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${location.origin}/auth/callback`,
+        },
+      });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
 
-      router.push("/auth/login");
+      setShowModal(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -38,6 +37,7 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-(--parchment)">
+      {showModal && <EmailConfirmationModal email={email} />}
       <div className="w-full max-w-sm flex flex-col gap-4">
         <h1 className="text-3xl font-bold text-center text-(--charcoal)">
           Sign Up
