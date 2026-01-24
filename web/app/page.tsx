@@ -17,7 +17,7 @@ export default function Home() {
 
   const isValidZip = /^\d{5}$/.test(zip)
 
-  /* ---------- LOAD ZIP FROM COOKIE (AUTHORITATIVE) ---------- */
+  /* ---------- LOAD ZIP FROM COOKIE (ONCE) ---------- */
   useEffect(() => {
     const savedZip = Cookies.get("zip")
     if (savedZip) {
@@ -26,7 +26,7 @@ export default function Home() {
     }
   }, [])
 
-  /* ---------- GEOLOCATION (FALLBACK ONLY) ---------- */
+  /* ---------- GEOLOCATION (ONLY IF USER NEVER TOUCHED INPUT) ---------- */
   async function fetchZipFromLocation() {
     if (!navigator.geolocation || geoAttempted.current) return
     geoAttempted.current = true
@@ -34,6 +34,9 @@ export default function Home() {
     navigator.geolocation.getCurrentPosition(
       async position => {
         try {
+          // ❗ Do NOT overwrite if user started typing
+          if (hasUserZip.current) return
+
           const res = await fetch(`${API}/api/reverse-geocode`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -46,25 +49,28 @@ export default function Home() {
           if (!res.ok) return
 
           const data = await res.json()
-          if (data.zip) {
+          if (/^\d{5}$/.test(data.zip)) {
             setZip(data.zip)
-            Cookies.set("zip", data.zip, { expires: 30 })
           }
-        } catch {
-          // silent fallback
-        }
+        } catch {}
       },
       () => {},
       { timeout: 8000 }
     )
   }
 
-  /* ---------- DECIDE IF GEOLOCATION SHOULD RUN ---------- */
+  /* ---------- RUN GEO ONLY ON FIRST LOAD ---------- */
   useEffect(() => {
-    if (!hasUserZip.current && !zip) {
+    if (!hasUserZip.current && !geoAttempted.current) {
       fetchZipFromLocation()
     }
-  }, [zip])
+  }, [])
+
+  /* ---------- INPUT CHANGE (USER INTENT) ---------- */
+  function handleZipChange(value: string) {
+    hasUserZip.current = true
+    setZip(value)
+  }
 
   /* ---------- START ---------- */
   async function handleStart() {
@@ -75,10 +81,7 @@ export default function Home() {
       const res = await fetch(`${API}/api/stores?zip=${zip}`)
       if (!res.ok) throw new Error()
 
-      // User intent becomes authoritative
       Cookies.set("zip", zip, { expires: 30 })
-      hasUserZip.current = true
-
       router.push(`/search?zip=${zip}`)
     } catch {
       alert("Could not load stores for this ZIP")
@@ -114,7 +117,9 @@ export default function Home() {
             <input
               type="text"
               value={zip}
-              onChange={e => setZip(e.target.value.replace(/\D/g, ""))}
+              onChange={e =>
+                handleZipChange(e.target.value.replace(/\D/g, ""))
+              }
               placeholder="ZIP code"
               maxLength={5}
               className="flex-1 px-4 py-3 text-(--charcoal) placeholder-gray-400 focus:outline-none"
