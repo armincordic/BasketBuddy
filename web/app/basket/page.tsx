@@ -69,7 +69,7 @@ export default function Basket() {
 
     const zip = Cookies.get("zip");
     fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/products?ids=${ids.join(",")}&zip=${zip ?? ""}`
+      `/api/products?ids=${ids.join(",")}&zip=${zip ?? ""}`
     )
       .then(res => res.json())
       .then(setProducts);

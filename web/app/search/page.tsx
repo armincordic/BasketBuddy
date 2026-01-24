@@ -8,8 +8,6 @@ import Cookies from "js-cookie"
 
 import NavBar from "@/app/components/NavBar"
 
-const API = process.env.NEXT_PUBLIC_API_URL!
-
 type Product = {
   name: string
   brand: string
@@ -68,7 +66,7 @@ export default function Search() {
     navigator.geolocation.getCurrentPosition(
       async position => {
         try {
-          const res = await fetch(`${API}/api/reverse-geocode`, {
+          const res = await fetch(`/api/reverse-geocode`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -106,7 +104,7 @@ export default function Search() {
       return
     }
 
-    fetch(`${API}/api/saved-items`, {
+    fetch(`/api/saved-items`, {
       headers: {
         Authorization: `Bearer ${session.access_token}`
       }
@@ -140,7 +138,7 @@ export default function Search() {
     setError(null)
 
     const res = await fetch(
-      `${API}/api/search?zip=${zip}&term=${encodeURIComponent(term)}`
+      `/api/search?zip=${zip}&term=${encodeURIComponent(term)}`
     )
 
     if (!res.ok) throw new Error()
@@ -173,7 +171,7 @@ export default function Search() {
     optimisticIncrement(product.externalID)
     if (!session) return
 
-    fetch(`${API}/api/saved-items`, {
+    fetch(`/api/saved-items`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -193,7 +191,7 @@ export default function Search() {
     optimisticDecrement(id)
     if (!session) return
 
-    fetch(`${API}/api/saved-items/${id}`, {
+    fetch(`/api/saved-items/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${session.access_token}`

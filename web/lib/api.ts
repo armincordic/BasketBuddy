@@ -1,8 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { SavedItem } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL!;
-
 async function getAuthHeaders() {
   const {
     data: { session },
@@ -21,7 +19,7 @@ async function getAuthHeaders() {
 export async function getSavedItems(): Promise<SavedItem[]> {
   const headers = await getAuthHeaders();
 
-  const res = await fetch(`${API_BASE}/api/saved-items`, {
+  const res = await fetch(`/api/saved-items`, {
     method: "GET",
     headers,
   });
@@ -39,7 +37,7 @@ export async function addSavedItem(
 ) {
   const headers = await getAuthHeaders();
 
-  const res = await fetch(`${API_BASE}/api/saved-items`, {
+  const res = await fetch(`/api/saved-items`, {
     method: "POST",
     headers,
     body: JSON.stringify({ external_id, quantity }),
@@ -54,7 +52,7 @@ export async function deleteSavedItem(external_id: string) {
   const headers = await getAuthHeaders();
 
   const res = await fetch(
-    `${API_BASE}/api/saved-items/${external_id}`,
+    `/api/saved-items/${external_id}`,
     {
       method: "DELETE",
       headers,

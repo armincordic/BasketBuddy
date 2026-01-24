@@ -4,8 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 
-const API = process.env.NEXT_PUBLIC_API_URL!
-
 export default function Home() {
   const router = useRouter()
 
@@ -37,7 +35,7 @@ export default function Home() {
           // ❗ Do NOT overwrite if user started typing
           if (hasUserZip.current) return
 
-          const res = await fetch(`${API}/api/reverse-geocode`, {
+          const res = await fetch(`/api/reverse-geocode`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -78,7 +76,7 @@ export default function Home() {
     setLoading(true)
 
     try {
-      const res = await fetch(`${API}/api/stores?zip=${zip}`)
+      const res = await fetch(`/api/stores?zip=${zip}`)
       if (!res.ok) throw new Error()
 
       Cookies.set("zip", zip, { expires: 30 })
