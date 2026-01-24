@@ -13,7 +13,8 @@ export const getAccessToken = async () => {
         "Authorization": `Basic ${auth}`,
         "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: "grant_type=client_credentials&scope=product.compact"
+      body: "grant_type=client_credentials&scope=product.compact product.full"
+
     }
   );
 
@@ -22,22 +23,21 @@ export const getAccessToken = async () => {
 };
 
 export const getStore = async (token, zip) => {
-  if (!zip) {
-    throw new Error("ZIP is required to fetch store")
-  }
+  if (!zip) throw new Error("ZIP is required for store lookup")
 
   const res = await fetch(
     `https://api.kroger.com/v1/locations?filter.zipCode=${zip}&filter.limit=1`,
     {
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
       }
     }
   )
 
   if (!res.ok) {
     const text = await res.text()
-    throw new Error(`Kroger location fetch failed: ${text}`)
+    throw new Error(`Kroger store lookup failed: ${text}`)
   }
 
   const data = await res.json()
@@ -52,19 +52,29 @@ export const getStore = async (token, zip) => {
 
 
 
+
 export const searchProducts = async (token, locationId, term) => {
   const res = await fetch(
-    `https://api.kroger.com/v1/products?filter.term=${term}&filter.locationId=${locationId}&filter.limit=5`,
+    `https://api.kroger.com/v1/products?filter.term=${encodeURIComponent(
+      term
+    )}&filter.locationId=${locationId}&filter.limit=20`,
     {
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
       }
     }
-  );
+  )
 
-  const data = await res.json();
-  return data.data;
-};
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Kroger search failed: ${text}`)
+  }
+
+  const data = await res.json()
+  return data.data ?? []
+}
+
 
 export async function getProductById(token, productId, locationId) {
   const res = await fetch(
