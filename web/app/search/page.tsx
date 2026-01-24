@@ -26,6 +26,7 @@ type SavedItem = {
 
 export default function Search() {
   const geoAttempted = useRef(false)
+  const hasUserZip = useRef(false)
 
   const [zip, setZip] = useState<string | null>(null)
   const [term, setTerm] = useState("")
@@ -35,10 +36,13 @@ export default function Search() {
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [session, setSession] = useState<Session | null>(null)
 
-  /* ---------- LOAD ZIP FROM COOKIE (CLIENT ONLY) ---------- */
+  /* ---------- LOAD ZIP FROM COOKIE (AUTHORITATIVE) ---------- */
   useEffect(() => {
     const storedZip = Cookies.get("zip")
-    if (storedZip) setZip(storedZip)
+    if (storedZip) {
+      setZip(storedZip)
+      hasUserZip.current = true
+    }
   }, [])
 
   /* ---------- AUTH ---------- */
@@ -56,7 +60,7 @@ export default function Search() {
     return () => subscription.unsubscribe()
   }, [])
 
-  /* ---------- GEO ZIP (ONLY IF USER NEVER SET ONE) ---------- */
+  /* ---------- GEO ZIP (FALLBACK ONLY) ---------- */
   async function fetchZipFromLocation() {
     if (!navigator.geolocation || geoAttempted.current) return
     geoAttempted.current = true
@@ -87,8 +91,11 @@ export default function Search() {
     )
   }
 
+  /* ---------- DECIDE IF GEO SHOULD RUN ---------- */
   useEffect(() => {
-    if (!zip) fetchZipFromLocation()
+    if (!hasUserZip.current && !zip) {
+      fetchZipFromLocation()
+    }
   }, [zip])
 
   /* ---------- CART HYDRATION ---------- */
@@ -194,7 +201,11 @@ export default function Search() {
     <div className="min-h-screen bg-(--parchment)">
       <NavBar
         zip={zip}
-        setZip={setZip}
+        setZip={z => {
+          setZip(z)
+          Cookies.set("zip", z, { expires: 30 })
+          hasUserZip.current = true
+        }}
         cartItemCount={cartItemCount}
         session={session}
       />
