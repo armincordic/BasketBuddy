@@ -13,12 +13,19 @@ export const getAccessToken = async () => {
         "Authorization": `Basic ${auth}`,
         "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: "grant_type=client_credentials&scope=product.compact product.full"
-
+      body: "grant_type=client_credentials&scope=product.compact"
     }
   );
 
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Kroger token request failed (${res.status}): ${text}`);
+  }
+
   const data = await res.json();
+  if (!data.access_token) {
+    throw new Error("Kroger token response missing access_token");
+  }
   return data.access_token;
 };
 

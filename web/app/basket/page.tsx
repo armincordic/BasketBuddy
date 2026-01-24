@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import Cookies from "js-cookie";
 import {
   getSavedItems,
   addSavedItem,
@@ -60,14 +61,15 @@ export default function Basket() {
     });
   }, [isReady]);
 
-  const ids = Object.keys(quantities);
+  const ids = useMemo(() => Object.keys(quantities), [quantities]);
 
   /* ---------- FETCH PRODUCTS ---------- */
   useEffect(() => {
     if (ids.length === 0) return;
 
+    const zip = Cookies.get("zip");
     fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/products?ids=${ids.join(",")}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/products?ids=${ids.join(",")}&zip=${zip ?? ""}`
     )
       .then(res => res.json())
       .then(setProducts);

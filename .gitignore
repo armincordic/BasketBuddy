@@ -33,3 +33,10 @@ out/
 *.njsproj
 *.sln
 *.sw?
+
+#claude
+.claude/
+claude/
+.claude.json
+claude.json
+
