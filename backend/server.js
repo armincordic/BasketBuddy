@@ -43,16 +43,24 @@ async function getUserFromReq(req) {
 /* ---------- SEARCH ---------- */
 app.get("/api/search", async (req, res) => {
   try {
-    const zip = req.query.zip
+    const { zip, term } = req.query
+
+    if (!zip || !term) {
+      return res.status(400).json({ error: "zip and term are required" })
+    }
+
     const token = await getAccessToken()
     const locationId = await getStore(token, zip)
-    const products = await searchProducts(token, locationId, req.query.term)
+
+    const products = await searchProducts(token, locationId, term)
+
     res.json(products.map(normalizeKrogerProduct))
   } catch (err) {
-    console.error(err)
+    console.error("SEARCH ERROR:", err.message)
     res.status(500).json([])
   }
 })
+
 
 /* ---------- PRODUCTS ---------- */
 app.get("/api/products", async (req, res) => {

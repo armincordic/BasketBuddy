@@ -22,7 +22,9 @@ export const getAccessToken = async () => {
 };
 
 export const getStore = async (token, zip) => {
-  if (!zip) throw new Error("ZIP is required")
+  if (!zip) {
+    throw new Error("ZIP is required to fetch store")
+  }
 
   const res = await fetch(
     `https://api.kroger.com/v1/locations?filter.zipCode=${zip}&filter.limit=1`,
@@ -35,12 +37,19 @@ export const getStore = async (token, zip) => {
 
   if (!res.ok) {
     const text = await res.text()
-    throw new Error(`Kroger store lookup failed: ${text}`)
+    throw new Error(`Kroger location fetch failed: ${text}`)
   }
 
   const data = await res.json()
-  return data
+
+  const locationId = data?.data?.[0]?.locationId
+  if (!locationId) {
+    throw new Error("No Kroger store found for ZIP")
+  }
+
+  return locationId
 }
+
 
 
 export const searchProducts = async (token, locationId, term) => {
