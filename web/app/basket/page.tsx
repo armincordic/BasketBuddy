@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import type { Session } from "@supabase/supabase-js";
 import Cookies from "js-cookie";
 import {
   getSavedItems,
@@ -36,12 +37,14 @@ export default function Basket() {
   const router = useRouter();
 
   const [isReady, setIsReady] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [products, setProducts] = useState<Product[]>([]);
 
   /* ---------- AUTH READY ---------- */
   useEffect(() => {
-    supabase.auth.getSession().then(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
       setIsReady(true);
     });
   }, []);
@@ -50,18 +53,33 @@ export default function Basket() {
   useEffect(() => {
     if (!isReady) return;
 
-    getSavedItems().then((items: SavedItem[]) => {
-      const map: Record<string, number> = {};
-      items.forEach(i => {
-        if (i.quantity > 0) {
-          map[i.external_id] = i.quantity;
-        }
+    if (session) {
+      getSavedItems().then((items: SavedItem[]) => {
+        const map: Record<string, number> = {};
+        items.forEach(i => {
+          if (i.quantity > 0) {
+            map[i.external_id] = i.quantity;
+          }
+        });
+        setQuantities(map);
       });
-      setQuantities(map);
-    });
-  }, [isReady]);
+    } else {
+      const saved = Cookies.get("cart");
+      if (saved) {
+        try {
+          setQuantities(JSON.parse(saved));
+        } catch {}
+      }
+    }
+  }, [isReady, session]);
 
   const ids = useMemo(() => Object.keys(quantities), [quantities]);
+
+  /* ---------- SYNC COOKIE FOR ANON ---------- */
+  useEffect(() => {
+    if (session) return;
+    Cookies.set("cart", JSON.stringify(quantities), { path: "/" });
+  }, [quantities, session]);
 
   /* ---------- FETCH PRODUCTS ---------- */
   useEffect(() => {
@@ -81,7 +99,7 @@ export default function Basket() {
       ...q,
       [id]: (q[id] ?? 0) + 1
     }));
-    addSavedItem(id, 1);
+    if (session) addSavedItem(id, 1);
   }
 
   function dec(id: string) {
@@ -94,7 +112,7 @@ export default function Basket() {
       }
       return { ...q, [id]: current - 1 };
     });
-    deleteSavedItem(id);
+    if (session) deleteSavedItem(id);
   }
 
   const visibleProducts = products.filter(
