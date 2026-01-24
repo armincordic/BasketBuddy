@@ -128,26 +128,32 @@ export default function Search() {
 
   /* ---------- SEARCH ---------- */
   async function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
+  e.preventDefault()
 
-    try {
-      setLoading(true)
-      setError(null)
-
-      const res = await fetch(
-        `${API}/api/search?term=${encodeURIComponent(term)}`
-      )
-
-      if (!res.ok) throw new Error()
-
-      const data = await res.json()
-      setResults(data)
-    } catch {
-      setError("Search failed")
-    } finally {
-      setLoading(false)
-    }
+  if (!zip) {
+    setError("ZIP code is required")
+    return
   }
+
+  try {
+    setLoading(true)
+    setError(null)
+
+    const res = await fetch(
+      `${API}/api/search?zip=${zip}&term=${encodeURIComponent(term)}`
+    )
+
+    if (!res.ok) throw new Error()
+
+    const data = await res.json()
+    setResults(data)
+  } catch {
+    setError("Search failed")
+  } finally {
+    setLoading(false)
+  }
+}
+
 
   /* ---------- CART HELPERS ---------- */
   function optimisticIncrement(id: string) {
