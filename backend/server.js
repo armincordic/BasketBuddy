@@ -43,8 +43,9 @@ async function getUserFromReq(req) {
 /* ---------- SEARCH ---------- */
 app.get("/api/search", async (req, res) => {
   try {
+    const zip = req.query.zip
     const token = await getAccessToken()
-    const locationId = await getStore(token)
+    const locationId = await getStore(token, zip)
     const products = await searchProducts(token, locationId, req.query.term)
     res.json(products.map(normalizeKrogerProduct))
   } catch (err) {
@@ -56,11 +57,12 @@ app.get("/api/search", async (req, res) => {
 /* ---------- PRODUCTS ---------- */
 app.get("/api/products", async (req, res) => {
   try {
+    const zip = req.query.zip
     const ids = req.query.ids?.split(",") ?? []
     if (ids.length === 0) return res.json([])
 
     const token = await getAccessToken()
-    const locationId = await getStore(token)
+    const locationId = await getStore(token, zip)
 
     const products = await Promise.all(
       ids.map(async id => {
