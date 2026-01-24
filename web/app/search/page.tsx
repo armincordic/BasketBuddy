@@ -1,9 +1,7 @@
 "use client"
 export const dynamic = "force-dynamic"
 
-
 import { useState, useEffect, useRef } from "react"
-import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import type { Session } from "@supabase/supabase-js"
 import Cookies from "js-cookie"
@@ -27,12 +25,9 @@ type SavedItem = {
 }
 
 export default function Search() {
-  const params = useSearchParams()
   const geoAttempted = useRef(false)
 
-  const queryZip = params.get("zip")
-
-  const [zip, setZip] = useState<string | null>(queryZip)
+  const [zip, setZip] = useState<string | null>(null)
   const [term, setTerm] = useState("")
   const [results, setResults] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
@@ -42,10 +37,9 @@ export default function Search() {
 
   /* ---------- LOAD ZIP FROM COOKIE (CLIENT ONLY) ---------- */
   useEffect(() => {
-    if (zip) return
     const storedZip = Cookies.get("zip")
     if (storedZip) setZip(storedZip)
-  }, [zip])
+  }, [])
 
   /* ---------- AUTH ---------- */
   useEffect(() => {
@@ -62,7 +56,7 @@ export default function Search() {
     return () => subscription.unsubscribe()
   }, [])
 
-  /* ---------- GEO ZIP (ONLY IF NO USER ZIP) ---------- */
+  /* ---------- GEO ZIP (ONLY IF USER NEVER SET ONE) ---------- */
   async function fetchZipFromLocation() {
     if (!navigator.geolocation || geoAttempted.current) return
     geoAttempted.current = true
@@ -196,7 +190,6 @@ export default function Search() {
 
   const cartItemCount = Object.keys(quantities).length
 
-  /* ---------- UI ---------- */
   return (
     <div className="min-h-screen bg-(--parchment)">
       <NavBar
