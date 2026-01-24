@@ -21,19 +21,27 @@ export const getAccessToken = async () => {
   return data.access_token;
 };
 
-export const getStore = async (token) => {
+export const getStore = async (token, zip) => {
+  if (!zip) throw new Error("ZIP is required")
+
   const res = await fetch(
-    "https://api.kroger.com/v1/locations?filter.zipCode=45202&filter.limit=1",
+    `https://api.kroger.com/v1/locations?filter.zipCode=${zip}&filter.limit=1`,
     {
       headers: {
         Authorization: `Bearer ${token}`
       }
     }
-  );
+  )
 
-  const data = await res.json();
-  return data.data[0].locationId;
-};
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Kroger store lookup failed: ${text}`)
+  }
+
+  const data = await res.json()
+  return data
+}
+
 
 export const searchProducts = async (token, locationId, term) => {
   const res = await fetch(
