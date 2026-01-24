@@ -18,10 +18,13 @@ export default function Signup() {
       setLoading(true);
       setError(null);
 
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    emailRedirectTo: `${location.origin}/auth/callback`,
+  },
+});
 
       if (error) throw error;
 
@@ -34,9 +37,9 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--parchment)]">
+    <div className="min-h-screen flex items-center justify-center bg-(--parchment)">
       <div className="w-full max-w-sm flex flex-col gap-4">
-        <h1 className="text-3xl font-bold text-center text-[var(--charcoal)]">
+        <h1 className="text-3xl font-bold text-center text-(--charcoal)">
           Sign Up
         </h1>
 
@@ -45,9 +48,9 @@ export default function Signup() {
           placeholder="Email"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          className="px-4 py-2 rounded border border-[var(--dust)] bg-white
-                     text-[var(--charcoal)] placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-[var(--teal)]"
+          className="px-4 py-2 rounded border border-(--dust) bg-white
+                     text-(--charcoal) placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-(--teal)"
         />
 
         <input
@@ -55,16 +58,16 @@ export default function Signup() {
           placeholder="Password"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          className="px-4 py-2 rounded border border-[var(--dust)] bg-white
-                     text-[var(--charcoal)] placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-[var(--teal)]"
+          className="px-4 py-2 rounded border border-(--dust) bg-white
+                     text-(--charcoal) placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-(--teal)"
         />
 
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="mt-2 px-4 py-2 rounded bg-[var(--slateblue)] text-white
-                     hover:bg-[var(--teal)] transition disabled:opacity-50"
+          className="mt-2 px-4 py-2 rounded bg-(--slateblue) text-white
+                     hover:bg-(--teal) transition disabled:opacity-50"
         >
           {loading ? "Creating account..." : "Sign Up"}
         </button>
@@ -75,11 +78,11 @@ export default function Signup() {
           </p>
         )}
 
-        <p className="text-sm text-center text-[var(--charcoal)]">
+        <p className="text-sm text-center text-(--charcoal)">
           Already have an account?{" "}
           <Link
             href="/auth/login"
-            className="text-[var(--slateblue)] hover:underline"
+            className="text-(--slateblue) hover:underline"
           >
             Sign in
           </Link>

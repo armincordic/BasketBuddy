@@ -1,11 +1,91 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
+import Cookies from "js-cookie"
+
+const API = process.env.NEXT_PUBLIC_API_URL!
 
 export default function Home() {
-  const [zip, setZip] = useState("");
-  const router = useRouter();
+  const router = useRouter()
+
+  const geoAttempted = useRef(false)
+  const hasUserZip = useRef(false)
+
+  const [zip, setZip] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  const isValidZip = /^\d{5}$/.test(zip)
+
+  /* ---------- LOAD ZIP FROM COOKIE (AUTHORITATIVE) ---------- */
+  useEffect(() => {
+    const savedZip = Cookies.get("zip")
+    if (savedZip) {
+      setZip(savedZip)
+      hasUserZip.current = true
+    }
+  }, [])
+
+  /* ---------- GEOLOCATION (FALLBACK ONLY) ---------- */
+  async function fetchZipFromLocation() {
+    if (!navigator.geolocation || geoAttempted.current) return
+    geoAttempted.current = true
+
+    navigator.geolocation.getCurrentPosition(
+      async position => {
+        try {
+          const res = await fetch(`${API}/api/reverse-geocode`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            })
+          })
+
+          if (!res.ok) return
+
+          const data = await res.json()
+          if (data.zip) {
+            setZip(data.zip)
+            Cookies.set("zip", data.zip, { expires: 30 })
+          }
+        } catch {
+          // silent fallback
+        }
+      },
+      () => {},
+      { timeout: 8000 }
+    )
+  }
+
+  /* ---------- DECIDE IF GEOLOCATION SHOULD RUN ---------- */
+  useEffect(() => {
+    if (!hasUserZip.current && !zip) {
+      fetchZipFromLocation()
+    }
+  }, [zip])
+
+  /* ---------- START ---------- */
+  async function handleStart() {
+    if (!isValidZip || loading) return
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${API}/api/stores?zip=${zip}`)
+      if (!res.ok) throw new Error()
+
+      // User intent becomes authoritative
+      Cookies.set("zip", zip, { expires: 30 })
+      hasUserZip.current = true
+
+      router.push(`/search?zip=${zip}`)
+    } catch {
+      alert("Could not load stores for this ZIP")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <main className="min-h-screen relative bg-(--parchment)">
@@ -30,17 +110,35 @@ export default function Home() {
             Build your basket and start saving
           </h1>
 
-          <input
-            type="text"
-            value={zip}
-            onChange={e => setZip(e.target.value)}
-            placeholder="Enter ZIP code"
-            className="w-64 px-4 py-2 rounded border border-(--dust) bg-white
-                       text-(--charcoal) placeholder-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-(--teal)"
-          />
+          <div className="flex items-center w-[360px] bg-white border border-(--dust) rounded-xl overflow-hidden shadow-sm">
+            <input
+              type="text"
+              value={zip}
+              onChange={e => setZip(e.target.value.replace(/\D/g, ""))}
+              placeholder="ZIP code"
+              maxLength={5}
+              className="flex-1 px-4 py-3 text-(--charcoal) placeholder-gray-400 focus:outline-none"
+            />
+
+            <button
+              onClick={handleStart}
+              disabled={!isValidZip || loading}
+              className={`px-5 py-3 font-medium transition
+                ${
+                  isValidZip && !loading
+                    ? "bg-(--slateblue) text-white hover:bg-(--teal)"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+            >
+              {loading ? "Loading…" : "Start Saving"}
+            </button>
+          </div>
+
+          <p className="text-sm text-gray-500">
+            Compare nearby grocery stores in seconds
+          </p>
         </div>
       </div>
     </main>
-  );
+  )
 }
