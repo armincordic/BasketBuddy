@@ -13,7 +13,7 @@ import {
 } from "./kroger.js"
 
 import { supabase } from "./supabaseAdmin.js"
-import { getNearbySupermarkets } from "./storeLocator.ts"
+import { getNearbySupermarkets } from "./storeLocator.js"
 
 dotenv.config()
 

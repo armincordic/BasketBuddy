@@ -1,21 +1,13 @@
-type Store = {
-  chain: string
-  name: string
-  lat: number
-  lng: number
-  distanceMiles: number
-}
-
 const USER_AGENT = "BasketBuddy/0.1 (contact: armincordic@outlook.com)"
 const RADIUS_METERS = 32000
 
-export async function getNearbySupermarkets(zip: string): Promise<Store[]> {
+export async function getNearbySupermarkets(zip) {
   const { lat, lng } = await geocodeZip(zip)
   const rawStores = await fetchSupermarkets(lat, lng)
   return normalizeStores(rawStores, lat, lng)
 }
 
-async function geocodeZip(zip: string): Promise<{ lat: number; lng: number }> {
+async function geocodeZip(zip) {
   const url = `https://nominatim.openstreetmap.org/search?q=${zip}&countrycodes=us&format=json&limit=1`
 
   const res = await fetch(url, {
@@ -36,7 +28,7 @@ async function geocodeZip(zip: string): Promise<{ lat: number; lng: number }> {
   }
 }
 
-async function fetchSupermarkets(lat: number, lng: number) {
+async function fetchSupermarkets(lat, lng) {
   const query = `
 [out:json];
 (
@@ -64,18 +56,18 @@ out center tags;
     if (!res.ok) throw new Error("Failed to fetch supermarkets")
 
     const data = await res.json()
-    return data.elements as any[]
+    return data.elements
   } finally {
     clearTimeout(timeout)
   }
 }
 
-function normalizeStores(elements: any[], originLat: number, originLng: number): Store[] {
-  const seen = new Set<string>()
-  const stores: Store[] = []
+function normalizeStores(elements, originLat, originLng) {
+  const seen = new Set()
+  const stores = []
 
   for (const el of elements) {
-    const rawName: string | undefined = el.tags?.brand ?? el.tags?.name
+    const rawName = el.tags?.brand ?? el.tags?.name
     if (!rawName) continue
 
     const chain = normalizeChain(rawName) ?? "Other"
@@ -100,7 +92,7 @@ function normalizeStores(elements: any[], originLat: number, originLng: number):
   return stores.sort((a, b) => a.distanceMiles - b.distanceMiles)
 }
 
-function normalizeChain(name: string): string | null {
+function normalizeChain(name) {
   const n = name.toLowerCase()
 
   if (n.includes("kroger")) return "Kroger"
@@ -115,8 +107,8 @@ function normalizeChain(name: string): string | null {
   return null
 }
 
-function haversineMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const toRad = (v: number) => (v * Math.PI) / 180
+function haversineMiles(lat1, lon1, lat2, lon2) {
+  const toRad = v => (v * Math.PI) / 180
   const R = 3958.8
 
   const dLat = toRad(lat2 - lat1)
