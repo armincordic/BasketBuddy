@@ -25,6 +25,7 @@ type SavedItem = {
 export default function Search() {
   const geoAttempted = useRef(false)
   const hasUserZip = useRef(false)
+  const cartHydrated = useRef(false)
 
   const [zip, setZip] = useState<string | null>(null)
   const [term, setTerm] = useState("")
@@ -101,6 +102,7 @@ export default function Search() {
     if (!session) {
       const saved = Cookies.get("cart")
       if (saved) setQuantities(JSON.parse(saved))
+      cartHydrated.current = true
       return
     }
 
@@ -120,7 +122,7 @@ export default function Search() {
   }, [session])
 
   useEffect(() => {
-    if (session) return
+    if (!cartHydrated.current || session) return
     Cookies.set("cart", JSON.stringify(quantities), { path: "/" })
   }, [quantities, session])
 

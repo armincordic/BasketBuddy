@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import type { Session } from "@supabase/supabase-js";
@@ -36,6 +36,7 @@ function slugify(name: string) {
 export default function Basket() {
   const router = useRouter();
 
+  const hydrated = useRef(false);
   const [isReady, setIsReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -70,6 +71,7 @@ export default function Basket() {
           setQuantities(JSON.parse(saved));
         } catch {}
       }
+      hydrated.current = true;
     }
   }, [isReady, session]);
 
@@ -77,7 +79,7 @@ export default function Basket() {
 
   /* ---------- SYNC COOKIE FOR ANON ---------- */
   useEffect(() => {
-    if (session) return;
+    if (!hydrated.current || session) return;
     Cookies.set("cart", JSON.stringify(quantities), { path: "/" });
   }, [quantities, session]);
 
