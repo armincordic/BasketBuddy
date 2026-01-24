@@ -1,11 +1,24 @@
 "use client";
 
-export default function EmailConfirmationModal({ email }: { email: string }) {
+export default function EmailConfirmationModal({
+  email,
+  onClose,
+}: {
+  email: string;
+  onClose: () => void;
+}) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl p-8 w-[90%] max-w-sm text-center shadow-xl">
-        <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-pink-100 flex items-center justify-center">
-          <span className="text-3xl">✉️</span>
+      <div className="relative bg-white rounded-2xl p-8 w-[90%] max-w-sm text-center shadow-xl">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-(--charcoal) hover:text-(--teal) transition text-xl leading-none"
+        >
+          &times;
+        </button>
+
+        <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-(--parchment) flex items-center justify-center">
+          <span className="text-3xl text-(--slateblue)">&#9993;</span>
         </div>
 
         <h2 className="text-xl font-semibold text-(--charcoal)">

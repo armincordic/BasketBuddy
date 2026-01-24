@@ -37,7 +37,7 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-(--parchment)">
-      {showModal && <EmailConfirmationModal email={email} />}
+      {showModal && <EmailConfirmationModal email={email} onClose={() => setShowModal(false)} />}
       <div className="w-full max-w-sm flex flex-col gap-4">
         <h1 className="text-3xl font-bold text-center text-(--charcoal)">
           Sign Up
