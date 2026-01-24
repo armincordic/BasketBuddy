@@ -1,9 +1,9 @@
 "use client"
-
 export const dynamic = "force-dynamic"
 
+
 import { useState, useEffect, useRef } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import type { Session } from "@supabase/supabase-js"
 import Cookies from "js-cookie"
@@ -27,7 +27,6 @@ type SavedItem = {
 }
 
 export default function Search() {
-  const router = useRouter()
   const params = useSearchParams()
   const geoAttempted = useRef(false)
 
