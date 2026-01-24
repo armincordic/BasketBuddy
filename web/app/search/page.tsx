@@ -32,18 +32,21 @@ export default function Search() {
   const geoAttempted = useRef(false)
 
   const queryZip = params.get("zip")
-  const cookieZip = Cookies.get("zip")
 
-  const [zip, setZip] = useState<string | null>(
-    queryZip ?? cookieZip ?? null
-  )
-
+  const [zip, setZip] = useState<string | null>(queryZip)
   const [term, setTerm] = useState("")
   const [results, setResults] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [session, setSession] = useState<Session | null>(null)
+
+  /* ---------- LOAD ZIP FROM COOKIE (CLIENT ONLY) ---------- */
+  useEffect(() => {
+    if (zip) return
+    const storedZip = Cookies.get("zip")
+    if (storedZip) setZip(storedZip)
+  }, [zip])
 
   /* ---------- AUTH ---------- */
   useEffect(() => {
@@ -60,7 +63,7 @@ export default function Search() {
     return () => subscription.unsubscribe()
   }, [])
 
-  /* ---------- ZIP AUTO FETCH (ONLY IF USER NEVER SET ONE) ---------- */
+  /* ---------- GEO ZIP (ONLY IF NO USER ZIP) ---------- */
   async function fetchZipFromLocation() {
     if (!navigator.geolocation || geoAttempted.current) return
     geoAttempted.current = true
@@ -80,7 +83,7 @@ export default function Search() {
           if (!res.ok) return
 
           const data = await res.json()
-          if (data.zip) {
+          if (/^\d{5}$/.test(data.zip)) {
             setZip(data.zip)
             Cookies.set("zip", data.zip, { expires: 30 })
           }
@@ -92,8 +95,8 @@ export default function Search() {
   }
 
   useEffect(() => {
-    if (!zip && !cookieZip) fetchZipFromLocation()
-  }, [zip, cookieZip])
+    if (!zip) fetchZipFromLocation()
+  }, [zip])
 
   /* ---------- CART HYDRATION ---------- */
   useEffect(() => {
@@ -199,7 +202,7 @@ export default function Search() {
     <div className="min-h-screen bg-(--parchment)">
       <NavBar
         zip={zip}
-        setZip={z => setZip(z)}
+        setZip={setZip}
         cartItemCount={cartItemCount}
         session={session}
       />
